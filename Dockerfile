@@ -6,6 +6,7 @@ COPY . .
 
 RUN rm -rf node_modules
 RUN npm i 
+RUN npm build 
 
 CMD ["npm", "start"]
 
