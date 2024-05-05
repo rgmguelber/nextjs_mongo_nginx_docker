@@ -8,6 +8,10 @@ EXPOSE 3000
 FROM base as builder
 WORKDIR /app
 COPY . .
+
+RUN npx prisma db pull
+RUN npx prisma generate
+
 RUN npm run build
 
 
