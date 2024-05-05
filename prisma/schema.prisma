@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Ativos {
+  AtivoID        Int         @id @default(autoincrement())
+  UsuarioID      Int
+  CodigoAtivo    String      @unique(map: "CodigoAtivo") @db.VarChar(10)
+  Tipo           String      @db.VarChar(20)
+  Nome           String      @db.VarChar(255)
+  CodigoAtivoPai String?     @db.VarChar(10)
+  Observacao     String?     @db.VarChar(2000)
+  Usuarios       Usuarios    @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: NoAction, onUpdate: NoAction, map: "Ativos_ibfk_1")
+  Operacoes      Operacoes[]
+  Proventos      Proventos[]
+
+  @@index([UsuarioID], map: "UsuarioID")
+}
+
+model Caixas {
+  CaixaID      Int         @id @default(autoincrement())
+  UsuarioID    Int
+  Caixa        String      @db.VarChar(40)
+  DataCriacao  DateTime    @db.Date
+  SaldoInicial Decimal     @db.Decimal(10, 2)
+  SaldoAtual   Decimal     @db.Decimal(10, 2)
+  Rendimento   Decimal     @db.Decimal(10, 2)
+  Usuarios     Usuarios    @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: NoAction, onUpdate: NoAction, map: "Caixas_ibfk_1")
+  Operacoes    Operacoes[]
+
+  @@index([UsuarioID], map: "UsuarioID")
+}
+
+model Operacoes {
+  OperacaoID   Int      @id @default(autoincrement())
+  UsuarioID    Int
+  CaixaID      Int
+  AtivoID      Int
+  SetupID      Int
+  TipoOperacao String   @db.Char(1)
+  Timeframe    String   @db.VarChar(10)
+  Quantidade   Int
+  Preco        Decimal  @db.Decimal(10, 2)
+  DataOperacao DateTime @db.Date
+  Taxas        Decimal  @db.Decimal(10, 2)
+  Usuarios     Usuarios @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: NoAction, onUpdate: NoAction, map: "Operacoes_ibfk_1")
+  Ativos       Ativos   @relation(fields: [AtivoID], references: [AtivoID], onDelete: NoAction, onUpdate: NoAction, map: "Operacoes_ibfk_2")
+  Caixas       Caixas   @relation(fields: [CaixaID], references: [CaixaID], onDelete: NoAction, onUpdate: NoAction, map: "Operacoes_ibfk_3")
+  Setups       Setups   @relation(fields: [SetupID], references: [SetupID], onUpdate: Restrict, map: "Operacoes_ibfk_4")
+
+  @@index([AtivoID], map: "AtivoID")
+  @@index([CaixaID], map: "CaixaID")
+  @@index([SetupID], map: "Operacoes_ibfk_4_idx")
+  @@index([UsuarioID], map: "UsuarioID")
+}
+
+model Proventos {
+  ProventoID   Int                    @id @default(autoincrement())
+  UsuarioID    Int
+  AtivoID      Int
+  DataProvento DateTime               @db.Date
+  TipoProvento Proventos_TipoProvento
+  Valor        Decimal                @db.Decimal(10, 2)
+  Usuarios     Usuarios               @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: NoAction, onUpdate: NoAction, map: "Proventos_ibfk_1")
+  Ativos       Ativos                 @relation(fields: [AtivoID], references: [AtivoID], onDelete: NoAction, onUpdate: NoAction, map: "Proventos_ibfk_2")
+
+  @@index([AtivoID], map: "AtivoID")
+  @@index([UsuarioID], map: "UsuarioID")
+}
+
+model Setups {
+  SetupID   Int         @id @default(autoincrement())
+  UsuarioID Int
+  Setup     String      @db.VarChar(40)
+  Operacoes Operacoes[]
+  Usuarios  Usuarios    @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: NoAction, onUpdate: NoAction, map: "Setups_ibfk_1")
+
+  @@index([UsuarioID], map: "UsuarioID")
+}
+
+model Usuarios {
+  UsuarioID        Int         @id @default(autoincrement())
+  Nome             String      @db.VarChar(255)
+  Email            String      @unique(map: "Email") @db.VarChar(255)
+  SenhaHash        String      @db.VarChar(255)
+  DataCadastro     DateTime    @db.Date
+  DataUltimoAcesso DateTime    @db.Date
+  Ativos           Ativos[]
+  Caixas           Caixas[]
+  Operacoes        Operacoes[]
+  Proventos        Proventos[]
+  Setups           Setups[]
+}
+
+enum Proventos_TipoProvento {
+  Juros
+  Dividendos
+  Rend__Fundos @map("Rend. Fundos")
+  Rend__FIIs   @map("Rend. FIIs")
+}
