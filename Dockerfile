@@ -1,13 +1,10 @@
-FROM node:current-alpine3.18
+FROM node:18
 
 WORKDIR /app
 
+COPY package*.json ./
+RUN npm install
 COPY . .
 
-RUN rm -rf node_modules
-RUN npm i 
-RUN npm build 
-
-CMD ["npm", "start"]
-
 EXPOSE 3000
+CMD npm run dev
